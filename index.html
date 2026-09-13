@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Undangan Pernikahan: Nisa & Rizki</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        sage: {
+                            50: '#F0F6FA',
+                                100: '#D9EAF3',
+                                600: '#5C93B6',
+                                800: '#3A6887',
+                                900: '#2A4E65',
+                                950: '#193141'
+                        },
+                        champagne: {
+                            100: '#FCFAF7',
+                                200: '#F5EFE6',
+                                400: '#E6D7C3',
+                                600: '#C8B092',
+                                800: '#A48967'
+                        }
+                    },
+                    fontFamily: {
+                        serif: ['Playfair Display', 'serif'],
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        script: ['Great Vibes', 'cursive']
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Inisialisasi Fungsi Global Firebase & Alpine Component SEBELUM Alpine.js dimuat -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-analytics.js";
+        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDt70rZLjMGJ7i-XOz8zf13kaKjoXgbnzs",
+            authDomain: "my-wedding1.firebaseapp.com",
+            projectId: "my-wedding1",
+            storageBucket: "my-wedding1.firebasestorage.app",
+            messagingSenderId: "415862592330",
+            appId: "1:415862592330:web:14539af3eb8e221b8d27b3",
+            measurementId: "G-7161HSQHSG"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const db = getFirestore(app);
+
+        // Daftarkan fungsi rsvpForm secara global
+        window.rsvpForm = function() {
+            return {
+                form: { name: '', status: 'Hadir', count: '1', message: '' },
+                submitted: false,
+                async submitRSVP() {
+                    if (!this.form.name || !this.form.message) {
+                        alert("Mohon isi nama dan pesan Anda.");
+                        return;
+                    }
+                    try {
+                        await addDoc(collection(db, "rsvps"), {
+                            name: this.form.name,
+                            status: this.form.status,
+                            count: this.form.count,
+                            message: this.form.message,
+                            createdAt: serverTimestamp()
+                        });
+                        this.submitted = true;
+                        this.form = { name: '', status: 'Hadir', count: '1', message: '' };
+                        setTimeout(() => { this.submitted = false; }, 4000);
+                    } catch (e) {
+                        console.error("Gagal mengirim RSVP ke database: ", e);
+                        alert("Terjadi kesalahan saat mengirim data ke database.");
+                    }
+                }
+            }
+        };
+
+        // Daftarkan guestBook secara global
+        window.guestBook = function() {
+            return {
+                comments: [],
+                init() {
+                    try {
+                        const q = query(collection(db, "rsvps"), orderBy("createdAt", "desc"));
+                        onSnapshot(q, (querySnapshot) => {
+                            let fetchedComments = [];
+                            querySnapshot.forEach((doc) => {
+                                fetchedComments.push(doc.data());
+                            });
+                            if (fetchedComments.length === 0) {
+                                this.comments = [
+                                    { name: 'Rian & Keluarga', status: 'Hadir', message: 'Selamat menempuh hidup baru Erun & Rizki!' },
+                                    { name: 'Sarah Amanda', status: 'Hadir', message: 'Happy wedding guys!' }
+                                ];
+                            } else {
+                                this.comments = fetchedComments;
+                            }
+                        }, (error) => {
+                            console.error("Error mendengarkan snapshot database: ", error);
+                        });
+                    } catch (err) {
+                        console.error("Gagal memuat guestbook: ", err);
+                    }
+                }
+            }
+        };
+    </script>
+
+    <!-- Alpine.js dimuat setelah fungsi global siap -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .font-serif { font-family: 'Playfair Display', serif; }
+        .font-script { font-family: 'Great Vibes', cursive; }
+        [x-cloak] { display: none !important; }
+    </style>
+</head>
+<body class="bg-champagne-100 text-sage-950 antialiased overflow-x-hidden pb-24" x-data="weddingApp()">
+
+    <audio id="bgMusic" loop>
+        <source src="https://www.bensound.com/bensound-music/bensound-tenderness.mp3" type="audio/mpeg">
+    </audio>
+
+    <div class="fixed top-5 right-5 z-40" x-show="opened" x-transition.opacity>
+        <button @click="toggleMusic()" class="bg-sage-800 text-white p-3 rounded-full shadow-lg hover:bg-sage-950 transition duration-300 flex items-center justify-center w-11 h-11 border border-champagne-200/20">
+            <i :class="isPlaying ? 'fa-solid fa-music animate-spin' : 'fa-solid fa-volume-xmark'"></i>
+        </button>
+    </div>
+
+    <div id="cover" class="fixed inset-0 z-50 flex flex-col items-center justify-center p-6 text-center transition-transform duration-1000 overflow-hidden" :class="opened ? '-translate-y-full' : 'translate-y-0'">
+        <div class="absolute inset-0 z-0">
+            <img src="images/erun&rizki.jpg" alt="Backdrop Cover Mempelai" class="w-full h-full object-cover object-center top scale-105">
+            <div class="absolute inset-0 bg-gradient-to-t from-sage-950 via-sage-900/80 to-sage-900/40 backdrop-blur-[1px]"></div>
+        </div>
+
+        <div class="relative z-10 max-w-md w-full bg-sage-900/50 backdrop-blur-md p-8 rounded-3xl border border-champagne-200/25 shadow-2xl text-champagne-100">
+            <span class="text-champagne-400 uppercase tracking-widest text-xs font-semibold mb-3 block">The Wedding Of</span>
+            <h1 class="font-script text-6xl md:text-7xl text-champagne-200 mb-4 drop-shadow-md">Nisa & Rizki</h1>
+            <p class="text-sm font-light text-sage-100 mb-6">Kepada Yth. Bapak/Ibu/Saudara/i,</p>
+            
+            <div class="bg-champagne-100/10 py-3 px-4 rounded-xl mb-8 border border-champagne-200/10 backdrop-blur-sm">
+                <span class="text-xs uppercase text-champagne-400 block mb-1">Tamu Undangan</span>
+                <span class="font-semibold text-lg text-white" x-text="guestName">Tamu Undangan</span>
+            </div>
+
+            <button @click="openInvitation()" class="w-full bg-champagne-600 hover:bg-champagne-800 text-white font-medium py-3.5 px-6 rounded-xl transition duration-300 shadow-md flex items-center justify-center space-x-2">
+                <i class="fa-regular fa-envelope-open"></i>
+                <span>Buka Undangan</span>
+            </button>
+        </div>
+    </div>
+
+    <div :class="opened ? 'block' : 'max-h-screen overflow-hidden'" class="relative">
+
+        <header id="section-home" class="min-h-screen flex flex-col items-center justify-center text-center p-6 relative overflow-hidden">
+            <div class="absolute inset-0 z-0">
+                <img src="images/image2.jpg" alt="Backdrop Mempelai" class="w-full h-full object-cover scale-105">
+                <div class="absolute inset-0 bg-gradient-to-t from-sage-950 via-sage-900/80 to-sage-900/40 backdrop-blur-[2px]"></div>
+            </div>
+
+            <div class="relative z-10 max-w-xl mx-auto space-y-4 pt-12 text-champagne-100">
+                <span class="text-champagne-400 uppercase tracking-[0.3em] text-xs font-bold drop-shadow">The Wedding Celebration</span>
+                <h1 class="font-script text-7xl md:text-8xl text-champagne-200 drop-shadow-md">Nisa & Rizki</h1>
+                <p class="font-serif italic text-sage-100 text-lg drop-shadow">"Dan di antara tanda-tanda kekuasaan-Nya ialah Dia menciptakan pasangan-pasangan dari jenismu sendiri, supaya kamu cenderung dan merasa tenteram kepadanya, dan dijadikan-Nya di antaramu rasa kasih dan sayang. Sesungguhnya pada yang demikian itu benar-benar terdapat tanda-tanda bagi kaum yang berpikir." (QS. Ar-Rum: 21)</p>
+                <div class="pt-6">
+                    <span class="inline-block border-y border-champagne-200/40 py-2 px-6 font-semibold tracking-widest text-sm text-champagne-100 uppercase backdrop-blur-sm bg-sage-900/30 rounded-lg">Sabtu, 4 Oktober 2026</span>
+                </div>
+            </div>
+
+            <div class="absolute bottom-16 z-10 animate-bounce text-champagne-200">
+                <i class="fa-solid fa-chevron-down text-sm"></i>
+            </div>
+        </header>
+
+        <section id="section-couple" class="py-20 px-6 max-w-4xl mx-auto text-center scroll-mt-10">
+            <span class="text-champagne-800 uppercase tracking-widest text-xs font-bold block mb-2">Mempelai Bahagia</span>
+            <h2 class="font-serif text-3xl md:text-4xl text-sage-900 mb-6">Assalamu'alaikum Wr. Wb.</h2>
+            <p class="text-sage-800 text-sm md:text-base max-w-xl mx-auto mb-16 font-light">Dengan memohon rahmat dan ridho Allah SWT, kami bermaksud mengundang Bapak/Ibu/Saudara/i untuk menghadiri pernikahan kami.</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
+                <!-- Mempelai Wanita -->
+                <div class="space-y-4 flex flex-col items-center h-full justify-between text-center">
+                    <div class="w-48 h-48 md:w-56 md:h-56 rounded-t-full rounded-b-3xl overflow-hidden shadow-xl border-4 border-champagne-200">
+                        <img src="images/erun.jpg" alt="Khairunnisa" class="w-full h-full object-cover">
+                    </div>
+                    <div class="space-y-2">
+                        <h3 class="font-script text-4xl text-sage-900">Khairunnisa, S.M</h3>
+                        <p class="text-xs text-sage-700 font-light">Putri dari Bpk. Marzuki (Alm) & Ibu Sabariah</p>
+                    </div>
+                </div>
+
+                <!-- Mempelai Pria -->
+                <div class="space-y-4 flex flex-col items-center h-full justify-between text-center">
+                    <div class="w-48 h-48 md:w-56 md:h-56 rounded-t-full rounded-b-3xl overflow-hidden shadow-xl border-4 border-champagne-200">
+                        <img src="images/rizki.jpeg.jpg" alt="Muhammad Rizki" class="w-full h-full object-cover">
+                    </div>
+                    <div class="space-y-2">
+                        <h3 class="font-script text-4xl text-sage-900">Muhammad Rizki Allifah, A.P.TAB</h3>
+                        <p class="text-xs text-sage-700 font-light">Putra dari Bpk. Syamsuddin & Ibu Tri Tompo</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="section-event" class="py-16 bg-sage-800 text-champagne-100 text-center px-6 scroll-mt-10">
+            <div class="max-w-xl mx-auto space-y-8">
+                <h2 class="font-serif text-3xl font-normal">Menuju Hari Bahagia</h2>
+                <div class="grid grid-cols-4 gap-4" x-data="countdown()">
+                    <div class="bg-sage-900/50 p-4 rounded-2xl border border-champagne-200/10 shadow-inner">
+                        <span class="text-3xl md:text-4xl font-bold block text-champagne-200" x-text="days">00</span>
+                        <span class="text-xs uppercase tracking-wider text-sage-300">Hari</span>
+                    </div>
+                    <div class="bg-sage-900/50 p-4 rounded-2xl border border-champagne-200/10 shadow-inner">
+                        <span class="text-3xl md:text-4xl font-bold block text-champagne-200" x-text="hours">00</span>
+                        <span class="text-xs uppercase tracking-wider text-sage-300">Jam</span>
+                    </div>
+                    <div class="bg-sage-900/50 p-4 rounded-2xl border border-champagne-200/10 shadow-inner">
+                        <span class="text-3xl md:text-4xl font-bold block text-champagne-200" x-text="minutes">00</span>
+                        <span class="text-xs uppercase tracking-wider text-sage-300">Menit</span>
+                    </div>
+                    <div class="bg-sage-900/50 p-4 rounded-2xl border border-champagne-200/10 shadow-inner">
+                        <span class="text-3xl md:text-4xl font-bold block text-champagne-200" x-text="seconds">00</span>
+                        <span class="text-xs uppercase tracking-wider text-sage-300">Detik</span>
+                    </div>
+                </div>
+                <a href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=Pernikahan+Erun+%26+Rizki&dates=20261014T080000Z/20261014T130000Z&details=Kehadiran+Anda+adalah+kehormatan+bagi+kami." target="_blank" class="inline-flex items-center space-x-2 bg-champagne-600 hover:bg-champagne-800 text-white px-6 py-3 rounded-xl transition duration-300 text-sm font-medium shadow-md">
+                    <i class="fa-regular fa-calendar-plus"></i>
+                    <span>Simpan ke Kalender</span>
+                </a>
+            </div>
+        </section>
+
+        <section class="py-20 px-6 max-w-5xl mx-auto">
+            <div class="text-center mb-16 space-y-2">
+                <span class="text-champagne-800 uppercase tracking-widest text-xs font-bold">Rangkaian Acara</span>
+                <h2 class="font-serif text-3xl md:text-4xl text-sage-900">Waktu & Tempat</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-white p-8 rounded-3xl shadow-sm border border-sage-100 flex flex-col justify-between space-y-6">
+                    <div class="space-y-4 text-center md:text-left">
+                        <div class="inline-block bg-sage-50 text-sage-800 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider">Akad Nikah</div>
+                        <h3 class="font-serif text-2xl text-sage-900">Pemberkatan / Akad</h3>
+                        <div class="space-y-2 text-sm text-sage-700">
+                            <p><i class="fa-regular fa-calendar mr-2 text-champagne-600"></i> Sabtu, 4 Oktober 2026</p>
+                            <p><i class="fa-regular fa-clock mr-2 text-champagne-600"></i> Pukul 05.30 WIB - Selesai</p>
+                            <p><i class="fa-solid fa-location-dot mr-2 text-champagne-600"></i> Rumah Mempelai Wanita, Desa Pernek Moyo Hulu</p>
+                        </div>
+                    </div>
+                    <a href="https://maps.app.goo.gl/9SpXjTYLyNvbJCbQA" target="_blank" class="w-full text-center border border-sage-800 text-sage-800 hover:bg-sage-800 hover:text-white py-3 rounded-xl transition duration-300 text-sm font-medium">
+                        <i class="fa-solid fa-map-location-dot mr-2"></i> Lihat Google Maps
+                    </a>
+                </div>
+
+                <div class="bg-white p-8 rounded-3xl shadow-sm border border-sage-100 flex flex-col justify-between space-y-6">
+                    <div class="space-y-4 text-center md:text-left">
+                        <div class="inline-block bg-sage-50 text-sage-800 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider">Resepsi Pernikahan</div>
+                        <h3 class="font-serif text-2xl text-sage-900">Resepsi & Jamuan</h3>
+                        <div class="space-y-2 text-sm text-sage-700">
+                            <p><i class="fa-regular fa-calendar mr-2 text-champagne-600"></i> Sabtu, 4 Oktober 2026</p>
+                            <p><i class="fa-regular fa-clock mr-2 text-champagne-600"></i> Pukul 09.00 - 11.00 Wita</p>
+                            <p><i class="fa-solid fa-location-dot mr-2 text-champagne-600"></i> Panggung Gembira Desa Pernek Moyo Hulu</p>
+                        </div>
+                    </div>
+                    <a href="https://maps.app.goo.gl/E53vwi4ackrq4uE9A" target="_blank" class="w-full text-center border border-sage-800 text-sage-800 hover:bg-sage-800 hover:text-white py-3 rounded-xl transition duration-300 text-sm font-medium">
+                        <i class="fa-solid fa-map-location-dot mr-2"></i> Lihat Google Maps
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <section id="section-gallery" class="py-20 bg-sage-50 px-6 scroll-mt-10" x-data="{ activeImg: null }">
+            <div class="max-w-5xl mx-auto">
+                <div class="text-center mb-16 space-y-2">
+                    <span class="text-champagne-800 uppercase tracking-widest text-xs font-bold">Momen Indah Kami</span>
+                    <h2 class="font-serif text-3xl md:text-4xl text-sage-900">Galeri Foto</h2>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <template x-for="(img, index) in [
+                        'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80',
+                        'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=800&q=80',
+                        'https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?auto=format&fit=crop&w=800&q=80',
+                        'https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=800&q=80',
+                        'https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=800&q=80',
+                        'https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&w=800&q=80'
+                    ]">
+                        <div @click="activeImg = img" class="overflow-hidden rounded-2xl shadow-md cursor-pointer aspect-square group">
+                            <img :src="img" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <div x-show="activeImg" x-cloak class="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4" @click="activeImg = null">
+                <div class="relative max-w-3xl w-full">
+                    <img :src="activeImg" class="w-full max-h-[85vh] object-contain rounded-xl">
+                    <button @click="activeImg = null" class="absolute top-4 right-4 text-white text-2xl bg-black/50 w-10 h-10 rounded-full flex items-center justify-center">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="section-rsvp" class="py-20 px-6 max-w-3xl mx-auto scroll-mt-10">
+            <div class="text-center mb-16 space-y-2">
+                <span class="text-champagne-800 uppercase tracking-widest text-xs font-bold">Konfirmasi & Doa</span>
+                <h2 class="font-serif text-3xl md:text-4xl text-sage-900">RSVP & Ucapan</h2>
+            </div>
+
+            <div class="bg-white p-8 rounded-3xl shadow-sm border border-sage-100 mb-12" x-data="rsvpForm()">
+                <form @submit.prevent="submitRSVP()" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-sage-800 mb-2">Nama Lengkap</label>
+                        <input type="text" x-model="form.name" required class="w-full px-4 py-3 rounded-xl border border-sage-200 focus:outline-none focus:border-sage-800 text-sm">
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-sage-800 mb-2">Konfirmasi Kehadiran</label>
+                            <select x-model="form.status" class="w-full px-4 py-3 rounded-xl border border-sage-200 focus:outline-none focus:border-sage-800 text-sm bg-white">
+                                <option value="Hadir">Hadir, Saya/Kami Akan Datang</option>
+                                <option value="Tidak Hadir">Maaf, Berhalangan Hadir</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-sage-800 mb-2">Jumlah Tamu</label>
+                            <select x-model="form.count" class="w-full px-4 py-3 rounded-xl border border-sage-200 focus:outline-none focus:border-sage-800 text-sm bg-white">
+                                <option value="1">1 Orang</option>
+                                <option value="2">2 Orang</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-sage-800 mb-2">Ucapan / Doa Restu</label>
+                        <textarea x-model="form.message" rows="4" required class="w-full px-4 py-3 rounded-xl border border-sage-200 focus:outline-none focus:border-sage-800 text-sm" placeholder="Tuliskan ucapan atau doa untuk mempelai..."></textarea>
+                    </div>
+                    <button type="submit" class="w-full bg-sage-800 hover:bg-sage-950 text-white font-medium py-3.5 rounded-xl transition duration-300 text-sm shadow-md">
+                        Kirim Konfirmasi & Ucapan
+                    </button>
+                </form>
+                <p x-show="submitted" x-cloak class="mt-4 text-center text-sm font-semibold text-green-600">Terima kasih! Konfirmasi dan ucapan Anda berhasil dikirim ke database.</p>
+            </div>
+
+            <div class="bg-white p-8 rounded-3xl shadow-sm border border-sage-100 mb-16" x-data="guestBook()">
+                <h3 class="font-serif text-xl text-sage-900 mb-6 border-b pb-4">Buku Tamu & Doa (<span x-text="comments.length"></span>)</h3>
+                <div class="space-y-4 max-h-96 overflow-y-auto pr-2">
+                    <template x-for="item in comments">
+                        <div class="bg-sage-50/50 p-4 rounded-2xl border border-sage-100 space-y-1">
+                            <div class="flex justify-between items-center">
+                                <span class="font-semibold text-sm text-sage-900" x-text="item.name"></span>
+                                <span class="text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase" :class="item.status === 'Hadir' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'" x-text="item.status"></span>
+                            </div>
+                            <p class="text-xs text-sage-600 font-light" x-text="item.message"></p>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <div class="bg-sage-800 text-champagne-100 p-8 rounded-3xl shadow-xl text-center space-y-6" x-data="copyAccount()">
+                <div class="space-y-2">
+                    <span class="text-champagne-600 uppercase tracking-widest text-xs font-bold">Tanda Kasih</span>
+                    <h3 class="font-serif text-2xl md:text-3xl">Amplop Digital</h3>
+                    <p class="text-xs text-sage-200 font-light max-w-md mx-auto">Doa restu Anda merupakan karunia terindah bagi kami. Namun jika Anda ingin memberikan tanda kasih, dapat melalui rekening di bawah ini:</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-sage-900/60 p-6 rounded-2xl border border-champagne-200/10 space-y-2 text-left">
+                        <span class="text-xs text-champagne-600 font-bold block uppercase">BCA</span>
+                        <p class="font-mono text-lg font-bold tracking-wider text-white" id="acc1">1234567890</p>
+                        <p class="text-xs text-sage-300">a.n Khairunnisa</p>
+                        <button @click="copyText('1234567890', 'copied1')" class="mt-2 text-xs bg-champagne-600 hover:bg-champagne-800 text-white px-4 py-2 rounded-lg transition duration-300 w-full flex items-center justify-center space-x-1">
+                            <i class="fa-regular fa-copy"></i>
+                            <span x-text="copied1 ? 'Berhasil Disalin!' : 'Salin Nomor Rekening'"></span>
+                        </button>
+                    </div>
+
+                    <div class="bg-sage-900/60 p-6 rounded-2xl border border-champagne-200/10 space-y-2 text-left">
+                        <span class="text-xs text-champagne-600 font-bold block uppercase">Mandiri</span>
+                        <p class="font-mono text-lg font-bold tracking-wider text-white" id="acc2">0987654321</p>
+                        <p class="text-xs text-sage-300">a.n Muhammad Rizki Allifah</p>
+                        <button @click="copyText('0987654321', 'copied2')" class="mt-2 text-xs bg-champagne-600 hover:bg-champagne-800 text-white px-4 py-2 rounded-lg transition duration-300 w-full flex items-center justify-center space-x-1">
+                            <i class="fa-regular fa-copy"></i>
+                            <span x-text="copied2 ? 'Berhasil Disalin!' : 'Salin Nomor Rekening'"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <footer class="bg-sage-900 text-champagne-100 py-12 text-center space-y-4 px-6 border-t border-champagne-200/10">
+            <h2 class="font-script text-5xl text-champagne-200">Nisa & Rizki</h2>
+            <p class="text-xs text-sage-300 font-light">Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir.</p>
+            <div class="pt-4 border-t border-champagne-200/10 max-w-xs mx-auto text-[10px] text-sage-400">
+                © 2026 R. Maulidin Web Design. All Rights Reserved.
+            </div>
+        </footer>
+
+    </div>
+
+    <nav class="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-sage-900/90 backdrop-blur-md border border-champagne-200/20 px-4 py-2.5 rounded-full shadow-2xl flex items-center space-x-4 md:space-x-6 text-champagne-100" x-show="opened" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-10" x-transition:enter-end="opacity-100 translate-y-0" x-cloak>
+        <button @click="backToCover()" title="Kembali ke Cover" class="flex flex-col items-center text-champagne-400 hover:text-white transition group">
+            <i class="fa-solid fa-home text-sm mb-0.5 group-hover:scale-110 transition"></i>
+            <span class="text-[9px] uppercase tracking-wider">Cover</span>
+        </button>
+
+        <div class="w-[1px] h-5 bg-champagne-200/20"></div>
+
+        <a href="#section-home" class="flex flex-col items-center text-champagne-200/70 hover:text-white transition group">
+            <i class="fa-regular fa-heart text-sm mb-0.5 group-hover:scale-110 transition"></i>
+            <span class="text-[9px] uppercase tracking-wider">Home</span>
+        </a>
+
+        <a href="#section-couple" class="flex flex-col items-center text-champagne-200/70 hover:text-white transition group">
+            <i class="fa-solid fa-user-group text-sm mb-0.5 group-hover:scale-110 transition"></i>
+            <span class="text-[9px] uppercase tracking-wider">Mempelai</span>
+        </a>
+
+        <a href="#section-event" class="flex flex-col items-center text-champagne-200/70 hover:text-white transition group">
+            <i class="fa-regular fa-calendar-days text-sm mb-0.5 group-hover:scale-110 transition"></i>
+            <span class="text-[9px] uppercase tracking-wider">Acara</span>
+        </a>
+
+        <a href="#section-gallery" class="flex flex-col items-center text-champagne-200/70 hover:text-white transition group">
+            <i class="fa-regular fa-images text-sm mb-0.5 group-hover:scale-110 transition"></i>
+            <span class="text-[9px] uppercase tracking-wider">Galeri</span>
+        </a>
+
+        <a href="#section-rsvp" class="flex flex-col items-center text-champagne-200/70 hover:text-white transition group">
+            <i class="fa-regular fa-envelope text-sm mb-0.5 group-hover:scale-110 transition"></i>
+            <span class="text-[9px] uppercase tracking-wider">RSVP</span>
+        </a>
+    </nav>
+
+    <!-- Script Utama Alpine.js untuk Animasi & Musik -->
+    <script>
+        function weddingApp() {
+            return {
+                opened: false,
+                isPlaying: false,
+                guestName: 'Tamu Undangan',
+                init() {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const to = urlParams.get('to');
+                    if (to) {
+                        this.guestName = decodeURIComponent(to);
+                    }
+                },
+                openInvitation() {
+                    this.opened = true;
+                    const music = document.getElementById('bgMusic');
+                    if (music) {
+                        music.play().then(() => {
+                            this.isPlaying = true;
+                        }).catch(error => {
+                            console.log("Autoplay diblokir browser, aktifkan via tombol.");
+                        });
+                    }
+                },
+                toggleMusic() {
+                    const music = document.getElementById('bgMusic');
+                    if (!music) return;
+                    if (this.isPlaying) {
+                        music.pause();
+                        this.isPlaying = false;
+                    } else {
+                        music.play();
+                        this.isPlaying = true;
+                    }
+                },
+                backToCover() {
+                    this.opened = false;
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            }
+        }
+
+        function countdown() {
+            return {
+                days: '00', hours: '00', minutes: '00', seconds: '00',
+                targetDate: new Date('October 4, 2026 09:00:00').getTime(),
+                init() {
+                    setInterval(() => {
+                        const now = new Date().getTime();
+                        const distance = this.targetDate - now;
+                        if (distance < 0) return;
+                        this.days = String(Math.floor(distance / (1000 * 60 * 60 * 24))).padStart(2, '0');
+                        this.hours = String(Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))).padStart(2, '0');
+                        this.minutes = String(Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60))).padStart(2, '0');
+                        this.seconds = String(Math.floor((distance % (1000 * 60)) / 1000)).padStart(2, '0');
+                    }, 1000);
+                }
+            }
+        }
+
+        function copyAccount() {
+            return {
+                copied1: false, copied2: false,
+                copyText(text, stateKey) {
+                    navigator.clipboard.writeText(text);
+                    this[stateKey] = true;
+                    setTimeout(() => { this[stateKey] = false; }, 2000);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
