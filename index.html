@@ -165,22 +165,25 @@
 
     <div :class="opened ? 'block' : 'max-h-screen overflow-hidden'" class="relative">
 
-        <header id="section-home" class="min-h-screen flex flex-col items-center justify-center text-center p-6 relative overflow-hidden">
+        <header id="section-home" class="min-h-screen flex flex-col items-center justify-center text-center p-4 sm:p-6 relative overflow-hidden">
             <div class="absolute inset-0 z-0">
-                <img src="images/image13.jpeg" alt="Backdrop Mempelai" class="w-full h-full object-cover scale-105">
+                <!-- Perbaikan foto: menggunakan object-center agar pas dan tidak terpotong ekstrem di desktop -->
+                <img src="images/image13.jpeg" alt="Backdrop Mempelai" class="w-full h-full object-cover object-center">
                 <div class="absolute inset-0 bg-gradient-to-t from-sage-950 via-sage-900/80 to-sage-900/40 backdrop-blur-[1px]"></div>
             </div>
 
-            <div class="relative z-10 max-w-xl mx-auto space-y-4 pt-12 text-champagne-100">
-                <span class="text-champagne-400 uppercase tracking-[0.3em] text-xs font-bold drop-shadow">The Wedding Celebration</span>
-                <h1 class="font-script text-7xl md:text-8xl text-champagne-200 drop-shadow-md">Nisa & Rizki</h1>
-                <p class="font-serif italic text-sage-100 text-lg drop-shadow">"Dan di antara tanda-tanda kekuasaan-Nya ialah Dia menciptakan pasangan-pasangan dari jenismu sendiri, supaya kamu cenderung dan merasa tenteram kepadanya, dan dijadikan-Nya di antaramu rasa kasih dan sayang. Sesungguhnya pada yang demikian itu benar-benar terdapat tanda-tanda bagi kaum yang berpikir." (QS. Ar-Rum: 21)</p>
-                <div class="pt-6">
-                    <span class="inline-block border-y border-champagne-200/40 py-2 px-6 font-semibold tracking-widest text-sm text-champagne-100 uppercase backdrop-blur-sm bg-sage-900/30 rounded-lg">Minggu, 4 Oktober 2026</span>
+            <!-- Perbaikan kotak di HP: menggunakan w-full max-w-sm sm:max-w-xl agar di HP tidak terlalu besar/lebar -->
+            <div class="relative z-10 w-full max-w-sm sm:max-w-xl mx-auto space-y-3 sm:space-y-4 pt-12 text-champagne-100 px-4">
+                <span class="text-champagne-400 uppercase tracking-[0.3em] text-[10px] sm:text-xs font-bold drop-shadow">The Wedding Celebration</span>
+                <!-- Perbaikan ukuran teks nama di HP agar lebih proporsional (text-5xl di HP, text-7xl/8xl di layar besar) -->
+                <h1 class="font-script text-5xl sm:text-7xl md:text-8xl text-champagne-200 drop-shadow-md">Nisa & Rizki</h1>
+                <p class="font-serif italic text-sage-100 text-xs sm:text-lg drop-shadow">"Dan di antara tanda-tanda kekuasaan-Nya ialah Dia menciptakan pasangan-pasangan dari jenismu sendiri, supaya kamu cenderung dan merasa tenteram kepadanya, dan dijadikan-Nya di antaramu rasa kasih dan sayang. Sesungguhnya pada yang demikian itu benar-benar terdapat tanda-tanda bagi kaum yang berpikir." (QS. Ar-Rum: 21)</p>
+                <div class="pt-4 sm:pt-6">
+                    <span class="inline-block border-y border-champagne-200/40 py-1.5 sm:py-2 px-4 sm:px-6 font-semibold tracking-widest text-xs sm:text-sm text-champagne-100 uppercase backdrop-blur-sm bg-sage-900/30 rounded-lg">Minggu, 4 Oktober 2026</span>
                 </div>
             </div>
 
-            <div class="absolute bottom-16 z-10 animate-bounce text-champagne-200">
+            <div class="absolute bottom-12 sm:bottom-16 z-10 animate-bounce text-champagne-200">
                 <i class="fa-solid fa-chevron-down text-sm"></i>
             </div>
         </header>
