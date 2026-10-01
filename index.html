@@ -126,6 +126,32 @@
         .font-serif { font-family: 'Playfair Display', serif; }
         .font-script { font-family: 'Great Vibes', cursive; }
         [x-cloak] { display: none !important; }
+
+                @keyframes fall {
+            0% {
+                transform: translateY(-10vh) translateX(0) rotate(0deg);
+                opacity: 0;
+            }
+            20% {
+                opacity: 0.8;
+            }
+            100% {
+                transform: translateY(105vh) translateX(50px) rotate(360deg);
+                opacity: 0.2;
+            }
+        }
+
+        .sakura-petal {
+            position: absolute;
+            top: -20px;
+            width: 12px;
+            height: 12px;
+            background-color: #F3EAE1;
+            border-radius: 50% 0 50% 50%;
+            opacity: 0.7;
+            animation: fall linear infinite;
+            box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+        }
     </style>
 </head>
 <body class="bg-champagne-100 text-sage-950 antialiased overflow-x-hidden pb-24" x-data="weddingApp()">
@@ -140,23 +166,33 @@
         </button>
     </div>
 
-    <div id="cover" class="fixed inset-0 z-50 flex flex-col items-center justify-center p-6 text-center transition-transform duration-1000 overflow-hidden" :class="opened ? '-translate-y-full' : 'translate-y-0'">
+    <div id="cover" class="fixed inset-0 z-50 flex flex-col items-center justify-end md:justify-center p-4 md:p-6 text-center transition-transform duration-1000 overflow-hidden" :class="opened ? '-translate-y-full' : 'translate-y-0'">
         <div class="absolute inset-0 z-0">
-            <img src="images/image2.jpeg" alt="Backdrop Cover Mempelai" class="w-full h-full object-cover object-center top scale-105">
-            <div class="absolute inset-0 bg-gradient-to-t from-sage-950 via-sage-900/20 to-sage-900/40"></div>
+            <img src="images/image2.jpeg" alt="Backdrop Cover Mempelai" class="w-full h-full object-cover object-center scale-105">
+            <div class="absolute inset-0 bg-gradient-to-t from-sage-950/90 via-sage-900/30 to-sage-900/20"></div>
         </div>
 
-        <div class="relative z-10 max-w-md w-full bg-sage-900/50 backdrop-blur-md p-8 rounded-3xl border border-champagne-200/25 shadow-2xl text-champagne-100">
-            <span class="text-champagne-400 uppercase tracking-widest text-xs font-semibold mb-3 block">The Wedding Of</span>
-            <h1 class="font-script text-6xl md:text-7xl text-champagne-200 mb-4 drop-shadow-md">Nisa & Rizki</h1>
-            <p class="text-sm font-light text-sage-100 mb-6">Kepada Yth. Bapak/Ibu/Saudara/i,</p>
+        <!-- Animasi Kelopak Bunga / Salju Berjatuhan (Khusus Cover) -->
+        <div class="absolute inset-0 z-1 pointer-events-none overflow-hidden">
+            <div class="sakura-petal" style="left: 10%; animation-duration: 7s; animation-delay: 0s;"></div>
+            <div class="sakura-petal" style="left: 25%; animation-duration: 9s; animation-delay: 2s;"></div>
+            <div class="sakura-petal" style="left: 40%; animation-duration: 6s; animation-delay: 1s;"></div>
+            <div class="sakura-petal" style="left: 55%; animation-duration: 8s; animation-delay: 3s;"></div>
+            <div class="sakura-petal" style="left: 70%; animation-duration: 10s; animation-delay: 0.5s;"></div>
+            <div class="sakura-petal" style="left: 85%; animation-duration: 7s; animation-delay: 2.5s;"></div>
+        </div>
+
+        <div class="relative z-10 max-w-md w-full bg-sage-900/40 backdrop-blur-md p-5 md:p-8 rounded-3xl border border-champagne-200/25 shadow-2xl text-champagne-100 mb-4 md:mb-0">
+            <span class="text-champagne-400 uppercase tracking-widest text-[10px] md:text-xs font-semibold mb-2 block">The Wedding Of</span>
+            <h1 class="font-script text-5xl md:text-7xl text-champagne-200 mb-3 drop-shadow-md">Nisa & Rizki</h1>
+            <p class="text-xs md:text-sm font-light text-sage-100 mb-4">Kepada Yth. Bapak/Ibu/Saudara/i,</p>
             
-            <div class="bg-champagne-100/10 py-3 px-4 rounded-xl mb-8 border border-champagne-200/10 backdrop-blur-sm">
-                <span class="text-xs uppercase text-champagne-400 block mb-1">Tamu Undangan</span>
-                <span class="font-semibold text-lg text-white" x-text="guestName">Tamu Undangan</span>
+            <div class="bg-champagne-100/10 py-2.5 px-4 rounded-xl mb-6 border border-champagne-200/10 backdrop-blur-sm">
+                <span class="text-[10px] uppercase text-champagne-400 block mb-0.5">Tamu Undangan</span>
+                <span class="font-semibold text-base md:text-lg text-white" x-text="guestName">Tamu Undangan</span>
             </div>
 
-            <button @click="openInvitation()" class="w-full bg-champagne-600 hover:bg-champagne-800 text-white font-medium py-3.5 px-6 rounded-xl transition duration-300 shadow-md flex items-center justify-center space-x-2">
+            <button @click="openInvitation()" class="w-full bg-champagne-600 hover:bg-champagne-800 text-white font-medium py-3 px-6 rounded-xl transition duration-300 shadow-md flex items-center justify-center space-x-2 text-sm md:text-base">
                 <i class="fa-regular fa-envelope-open"></i>
                 <span>Buka Undangan</span>
             </button>
@@ -349,6 +385,8 @@
                         'images/image10.jpeg',
                         'images/image11.jpeg',
                         'images/image12.jpeg',
+                        'images/image13.jpeg',
+                        'images/image15.jpeg',
                     ]">
                         <div @click="activeImg = img" class="overflow-hidden rounded-2xl shadow-md cursor-pointer aspect-square group">
                             <img :src="img" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
